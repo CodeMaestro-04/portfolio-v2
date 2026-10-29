@@ -1,275 +1,539 @@
+/**
+ * Abhinav Kumar Singh — Modern Brutalist Developer Portfolio
+ * Interactive Scripts & Micro-interactions (GertiX Studio Design System)
+ */
+
+document.addEventListener('DOMContentLoaded', () => {
+  initTheme();
+  initHeaderScroll();
+  initMobileMenu();
+  initHeroCanvas();
+  initTypeWriter();
+  initSkillFilters();
+  initFooterSpotlight();
+  initInteractiveTerminal();
+  initResumeModal();
+  setupInteractivePipeline();
+});
+
 // ==========================================
-// 1. MINIMAL 3D TECH & SKILLS BACKGROUND
+// 1. HEADER SCROLL DETECTION
 // ==========================================
-function initThreeJS() {
-  const canvas = document.getElementById('canvas3d');
-  if (!canvas || typeof THREE === 'undefined') return;
-  canvas.style.display = 'block';
+function initHeaderScroll() {
+  const header = document.querySelector('.cb-site-header');
+  if (!header) return;
 
-  const scene = new THREE.Scene();
-  const camera = new THREE.PerspectiveCamera(60, window.innerWidth / window.innerHeight, 0.1, 1000);
-  camera.position.z = 42;
+  const handleScroll = () => {
+    if (window.scrollY > 40) {
+      header.classList.add('is-scrolled');
+    } else {
+      header.classList.remove('is-scrolled');
+    }
+  };
 
-  const renderer = new THREE.WebGLRenderer({ canvas: canvas, alpha: true, antialias: true });
-  renderer.setSize(window.innerWidth, window.innerHeight);
-  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  window.addEventListener('scroll', handleScroll, { passive: true });
+  handleScroll();
+}
 
-  // Helper: Create a crisp 3D glass tech pill texture for a skill/tech label
-  function createSkillBadgeTexture(tag, sub, accentHex) {
-    const c = document.createElement('canvas');
-    c.width = 320;
-    c.height = 110;
-    const ctx = c.getContext('2d');
+// ==========================================
+// 2. MOBILE MENU TOGGLE
+// ==========================================
+function initMobileMenu() {
+  const header = document.querySelector('.cb-site-header');
+  const burger = document.querySelector('.cb-site-header__burger');
+  const menuLinks = document.querySelectorAll('.cb-site-header__menu a');
 
-    // Rounded glass card background
-    const r = 20;
-    ctx.beginPath();
-    ctx.roundRect(6, 6, 308, 98, r);
-    ctx.fillStyle = 'rgba(4, 24, 29, 0.72)';
-    ctx.fill();
-    ctx.lineWidth = 2.5;
-    ctx.strokeStyle = accentHex;
-    ctx.stroke();
+  if (!burger || !header) return;
 
-    // Left status dot
-    ctx.beginPath();
-    ctx.arc(34, 44, 6, 0, Math.PI * 2);
-    ctx.fillStyle = accentHex;
-    ctx.fill();
+  burger.addEventListener('click', () => {
+    header.classList.toggle('is-open');
+  });
 
-    // Primary skill title
-    ctx.font = '700 24px "JetBrains Mono", monospace';
-    ctx.fillStyle = '#f0fdfa';
-    ctx.fillText(tag, 52, 52);
-
-    // Sub-label
-    ctx.font = '500 15px "JetBrains Mono", monospace';
-    ctx.fillStyle = '#99f6e4';
-    ctx.fillText(sub, 30, 82);
-
-    const tex = new THREE.CanvasTexture(c);
-    tex.needsUpdate = true;
-    return tex;
-  }
-
-  // Minimal 3D floating skill cards placed around outer margins
-  const skillSpecs = [
-    { tag: 'Python', sub: 'Django · Scripts', color: '#34d399', x: -31, y: 17, z: -6, rx: 0.08, ry: 0.22 },
-    { tag: 'RabbitMQ', sub: 'Async Queue', color: '#2dd4bf', x: 31, y: 16, z: -8, rx: 0.06, ry: -0.24 },
-    { tag: 'Spring Boot', sub: 'Java 17 · AI', color: '#10b981', x: -33, y: -2, z: -10, rx: -0.05, ry: 0.25 },
-    { tag: 'React', sub: 'Frontend UI', color: '#2dd4bf', x: 32, y: -3, z: -9, rx: -0.04, ry: -0.22 },
-    { tag: 'PostgreSQL', sub: 'SQL · Data Logs', color: '#34d399', x: -29, y: -18, z: -7, rx: -0.08, ry: 0.2 },
-    { tag: 'Telegram API', sub: 'Worker Monitor', color: '#fbbf24', x: 29, y: -18, z: -8, rx: -0.08, ry: -0.2 }
-  ];
-
-  const badgeMeshes = [];
-  const planeGeo = new THREE.PlaneGeometry(9.2, 3.15);
-
-  skillSpecs.forEach((s, idx) => {
-    const tex = createSkillBadgeTexture(s.tag, s.sub, s.color);
-    const mat = new THREE.MeshBasicMaterial({
-      map: tex,
-      transparent: true,
-      opacity: 0.42,
-      depthWrite: false,
-      side: THREE.DoubleSide
+  menuLinks.forEach(link => {
+    link.addEventListener('click', () => {
+      header.classList.remove('is-open');
     });
-    const mesh = new THREE.Mesh(planeGeo, mat);
-    mesh.position.set(s.x, s.y, s.z);
-    mesh.rotation.set(s.rx, s.ry, 0);
-    mesh.userData = { baseX: s.x, baseY: s.y, baseZ: s.z, baseRx: s.rx, baseRy: s.ry, phase: idx * 1.1 };
-    scene.add(mesh);
-    badgeMeshes.push(mesh);
   });
+}
 
-  // Minimal 3D Tech Wireframe Shapes:
-  // 1) 3D Database Stack Ring (representing PostgreSQL / SQL) on bottom-left
-  const dbGroup = new THREE.Group();
-  const ringGeo = new THREE.CylinderGeometry(4.2, 4.2, 1.4, 24, 1, true);
-  const ringMat = new THREE.MeshBasicMaterial({ color: 0x10b981, wireframe: true, transparent: true, opacity: 0.12 });
-  for (let i = -1; i <= 1; i++) {
-    const cyl = new THREE.Mesh(ringGeo, ringMat);
-    cyl.position.y = i * 1.8;
-    dbGroup.add(cyl);
+// ==========================================
+// 3. HERO CANVAS 3D PARTICLES & CONSTELLATION
+// ==========================================
+function initHeroCanvas() {
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+
+  const ctx = canvas.getContext('2d');
+  let width, height;
+  let particles = [];
+  const particleCount = 40;
+  let mouse = { x: -1000, y: -1000 };
+
+  function resize() {
+    width = canvas.width = canvas.parentElement.offsetWidth;
+    height = canvas.height = canvas.parentElement.offsetHeight;
   }
-  dbGroup.position.set(-22, 9, -18);
-  dbGroup.rotation.set(0.35, 0.4, 0.1);
-  scene.add(dbGroup);
 
-  // 2) 3D Orbital Gyro Rings (representing React / Async Architecture) on top-right
-  const atomGroup = new THREE.Group();
-  const torusGeo = new THREE.TorusGeometry(5.2, 0.08, 8, 48);
-  const torusMat = new THREE.MeshBasicMaterial({ color: 0x2dd4bf, transparent: true, opacity: 0.18 });
-  for (let i = 0; i < 3; i++) {
-    const ring = new THREE.Mesh(torusGeo, torusMat);
-    ring.rotation.x = (i * Math.PI) / 3;
-    ring.rotation.y = (i * Math.PI) / 4;
-    atomGroup.add(ring);
-  }
-  const coreGeo = new THREE.OctahedronGeometry(1.1, 0);
-  const coreMat = new THREE.MeshBasicMaterial({ color: 0x34d399, wireframe: true, transparent: true, opacity: 0.28 });
-  atomGroup.add(new THREE.Mesh(coreGeo, coreMat));
-  atomGroup.position.set(23, 8, -16);
-  scene.add(atomGroup);
+  window.addEventListener('resize', resize);
+  resize();
 
-  // 3) Subtle 3D Architecture Circuit Lines connecting left and right nodes
-  const lineMaterial = new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.09 });
-  const circuitPairs = [
-    [0, 2], [2, 4], [1, 3], [3, 5]
-  ];
-  circuitPairs.forEach(([a, b]) => {
-    const pts = [
-      new THREE.Vector3(skillSpecs[a].x, skillSpecs[a].y, skillSpecs[a].z - 1),
-      new THREE.Vector3(skillSpecs[b].x, skillSpecs[b].y, skillSpecs[b].z - 1)
-    ];
-    const lineGeo = new THREE.BufferGeometry().setFromPoints(pts);
-    scene.add(new THREE.Line(lineGeo, lineMaterial));
-  });
-
-  // Gentle mouse parallax + ambient cursor glow
-  let mouseX = 0;
-  let mouseY = 0;
   window.addEventListener('mousemove', (e) => {
-    document.documentElement.style.setProperty('--mouse-x', `${e.clientX}px`);
-    document.documentElement.style.setProperty('--mouse-y', `${e.clientY}px`);
-    mouseX = (e.clientX / window.innerWidth - 0.5) * 2;
-    mouseY = (e.clientY / window.innerHeight - 0.5) * 2;
-  }, { passive: true });
-
-  window.addEventListener('resize', () => {
-    camera.aspect = window.innerWidth / window.innerHeight;
-    camera.updateProjectionMatrix();
-    renderer.setSize(window.innerWidth, window.innerHeight);
+    const rect = canvas.getBoundingClientRect();
+    mouse.x = e.clientX - rect.left;
+    mouse.y = e.clientY - rect.top;
   });
 
-  const clock = new THREE.Clock();
-  function animate() {
-    requestAnimationFrame(animate);
-    const t = clock.getElapsedTime();
+  class Particle {
+    constructor() {
+      this.x = Math.random() * width;
+      this.y = Math.random() * height;
+      this.vx = (Math.random() - 0.5) * 0.45;
+      this.vy = (Math.random() - 0.5) * 0.45;
+      this.size = Math.random() * 2 + 1;
+      this.baseColor = 'rgba(37, 184, 149, '; // Gertix Chromata green
+    }
 
-    // Smoothly float each 3D skill card
-    badgeMeshes.forEach((m) => {
-      const u = m.userData;
-      m.position.y = u.baseY + Math.sin(t * 0.7 + u.phase) * 0.85;
-      m.rotation.y = u.baseRy + Math.sin(t * 0.45 + u.phase) * 0.06 + mouseX * 0.05;
-      m.rotation.x = u.baseRx + Math.cos(t * 0.4 + u.phase) * 0.04 - mouseY * 0.04;
+    update() {
+      this.x += this.vx;
+      this.y += this.vy;
+
+      if (this.x < 0) this.x = width;
+      if (this.x > width) this.x = 0;
+      if (this.y < 0) this.y = height;
+      if (this.y > height) this.y = 0;
+
+      const dx = mouse.x - this.x;
+      const dy = mouse.y - this.y;
+      const dist = Math.sqrt(dx * dx + dy * dy);
+      if (dist < 130) {
+        this.x -= (dx / dist) * 0.7;
+        this.y -= (dy / dist) * 0.7;
+      }
+    }
+
+    draw() {
+      ctx.beginPath();
+      ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+      ctx.fillStyle = this.baseColor + '0.6)';
+      ctx.fill();
+    }
+  }
+
+  for (let i = 0; i < particleCount; i++) {
+    particles.push(new Particle());
+  }
+
+  function animate() {
+    ctx.clearRect(0, 0, width, height);
+
+    for (let i = 0; i < particles.length; i++) {
+      for (let j = i + 1; j < particles.length; j++) {
+        const dx = particles[i].x - particles[j].x;
+        const dy = particles[i].y - particles[j].y;
+        const dist = Math.sqrt(dx * dx + dy * dy);
+
+        if (dist < 140) {
+          ctx.beginPath();
+          ctx.moveTo(particles[i].x, particles[i].y);
+          ctx.lineTo(particles[j].x, particles[j].y);
+          const opacity = (1 - dist / 140) * 0.18;
+          ctx.strokeStyle = `rgba(155, 172, 174, ${opacity})`;
+          ctx.lineWidth = 0.6;
+          ctx.setLineDash([2, 4]); // Dashed blueprint lines
+          ctx.stroke();
+          ctx.setLineDash([]);
+        }
+      }
+    }
+
+    particles.forEach(p => {
+      p.update();
+      p.draw();
     });
 
-    // Gentle rotation on the 3D Database cylinder stack & 3D React/Async orbital rings
-    dbGroup.rotation.y = t * 0.18;
-    dbGroup.position.y = 9 + Math.sin(t * 0.6) * 0.6;
-
-    atomGroup.rotation.y = t * 0.22;
-    atomGroup.rotation.z = t * 0.12;
-    atomGroup.position.y = 8 + Math.cos(t * 0.65) * 0.6;
-
-    renderer.render(scene, camera);
+    requestAnimationFrame(animate);
   }
 
   animate();
 }
 
 // ==========================================
-// 2. TYPING EFFECT IN HERO
+// 4. HERO TYPEWRITER EFFECT
 // ==========================================
 const typeWords = [
+  "Agentic AI System Design",
   "Python & Django REST APIs",
   "RabbitMQ & Telegram Bot Systems",
+  "Next.js & React Web Apps",
   "Java & Spring Boot Backend",
-  "PostgreSQL, SQL & Hibernate JPA",
-  "React & Modern Web Interfaces"
+  "PostgreSQL, SQL & Hibernate JPA"
 ];
 let wordIdx = 0;
 let charIdx = 0;
 let isDeleting = false;
 const typingDelay = 75;
-const erasingDelay = 40;
+const erasingDelay = 35;
 const newWordDelay = 1800;
 
-function typeWriter() {
+function initTypeWriter() {
   const typingElement = document.getElementById("typing-text");
   if (!typingElement) return;
 
-  const currentWord = typeWords[wordIdx];
+  function type() {
+    const currentWord = typeWords[wordIdx];
 
-  if (isDeleting) {
-    typingElement.textContent = currentWord.substring(0, charIdx - 1);
-    charIdx--;
-  } else {
-    typingElement.textContent = currentWord.substring(0, charIdx + 1);
-    charIdx++;
+    if (isDeleting) {
+      typingElement.textContent = currentWord.substring(0, charIdx - 1);
+      charIdx--;
+    } else {
+      typingElement.textContent = currentWord.substring(0, charIdx + 1);
+      charIdx++;
+    }
+
+    let speed = isDeleting ? erasingDelay : typingDelay;
+
+    if (!isDeleting && charIdx === currentWord.length) {
+      speed = newWordDelay;
+      isDeleting = true;
+    } else if (isDeleting && charIdx === 0) {
+      isDeleting = false;
+      wordIdx = (wordIdx + 1) % typeWords.length;
+      speed = 350;
+    }
+
+    setTimeout(type, speed);
   }
 
-  let speed = isDeleting ? erasingDelay : typingDelay;
-
-  if (!isDeleting && charIdx === currentWord.length) {
-    speed = newWordDelay;
-    isDeleting = true;
-  } else if (isDeleting && charIdx === 0) {
-    isDeleting = false;
-    wordIdx = (wordIdx + 1) % typeWords.length;
-    speed = 400;
-  }
-
-  setTimeout(typeWriter, speed);
+  type();
 }
 
 // ==========================================
-// 3. TOAST NOTIFICATION & COPY UTILITY
+// 5. INTERACTIVE SKILL MATRIX FILTERS
 // ==========================================
-function showToast(message) {
-  const toast = document.getElementById("toast");
-  if (!toast) return;
-  toast.textContent = message;
-  toast.classList.add("show");
-  setTimeout(() => {
-    toast.classList.remove("show");
+function initSkillFilters() {
+  const tabBtns = document.querySelectorAll('.skill-tab-btn');
+  const cards = document.querySelectorAll('.skill-item');
+
+  if (!tabBtns.length || !cards.length) return;
+
+  tabBtns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      tabBtns.forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+
+      const filter = btn.getAttribute('data-filter');
+
+      cards.forEach(card => {
+        const cat = card.getAttribute('data-category') || '';
+        if (filter === 'all' || cat.includes(filter)) {
+          card.style.display = 'flex';
+        } else {
+          card.style.display = 'none';
+        }
+      });
+    });
+  });
+}
+
+// ==========================================
+// 6. FOOTER MOUSE-FOLLOWING SPOTLIGHT
+// ==========================================
+function initFooterSpotlight() {
+  const footer = document.querySelector('.cb-site-footer');
+  if (!footer) return;
+
+  footer.addEventListener('mousemove', (e) => {
+    const rect = footer.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+    footer.style.setProperty('--mouse-x', `${x}px`);
+    footer.style.setProperty('--mouse-y', `${y}px`);
+  });
+}
+
+// ==========================================
+// 7. INTERACTIVE TERMINAL WINDOW
+// ==========================================
+const terminalFiles = {
+  'profile.json': `{
+  "name": "Abhinav Kumar Singh",
+  "hometown": "Dhanbad, Jharkhand",
+  "current_location": "New Delhi",
+  "role": "Full Stack Developer Intern @ Easy Insights",
+  "production_focus": [
+    "Web App Development (React, Django REST Framework, PostgreSQL, PostHog)",
+    "Task Processing & Monitoring System (Python, RabbitMQ, Telegram Bot API, PostgreSQL)",
+    "Python Scripts for Meta & Google Landing Page URLs and Meta Instant Forms",
+    "Python Scripts for DigitalOcean Active Server Discovery"
+  ]
+}`,
+
+  'production.log': `[2026-10-17 10:45:12] [RabbitMQ] Worker #4 connected to amqp://easyinsights-cluster
+[2026-10-17 10:45:14] [Celery/Worker] Task received: process_lead_enrichment_v2 [ID: #8941]
+[2026-10-17 10:45:15] [PostgreSQL] Query execution: UPDATE task_logs SET status='PROCESSING' (1.4ms)
+[2026-10-17 10:45:18] [TelegramBotAPI] Bot notification dispatched to Ops Channel: ✅ Task #8941 Completed.
+[2026-10-17 10:45:20] [SpringAI] Model Comparison Ping: Ollama: 142ms, OpenAI: 280ms, Claude: 310ms
+[2026-10-17 10:45:22] [System Health] Heap: 314MB/2048MB | Workers Active: 6 | Failed Tasks: 0`,
+
+  'skills.sh': `#!/bin/bash
+echo "=== CORE TECHNICAL SPECIFICATIONS ==="
+echo "LANGUAGES      : Java 17, Python 3, JavaScript (ES6+), SQL, OOP (SOLID)"
+echo "FRAMEWORKS/WEB : Next.js, React, Spring Boot, Django, Hibernate JPA, REST APIs"
+echo "AI & AGENTIC   : Agentic AI System Design, Multi-Agent Workflows, Spring AI, Gemini API, Ollama"
+echo "METHODOLOGY    : SDLC (Agile, Sprint Cycles, Code Review, Testing & QA)"
+echo "MESSAGING/MQ   : RabbitMQ, Celery, Telegram Bot API"
+echo "DATABASES      : PostgreSQL, MySQL, Relational Schema Normalization"
+echo "TOOLS & DEPLOY : Git, GitHub, Linux, VS Code, Eclipse IDE, Apache Tomcat, Postman, PostHog"
+echo "ACADEMICS      : B.Tech in IT (2023-2026) @ Netaji Subhash Engineering College"`,
+
+  'git-status.sh': `On branch main
+Your branch is up to date with 'origin/main'.
+
+Recent commits:
+* 9a8c1f4 feat: integrate Telegram Bot API with RabbitMQ failure monitor
+* 7b2e401 feat: multi-model parallel inference with Spring AI & Ollama
+* 3f1a92b feat: Aadhaar one-to-one entity relational mapping in JPA
+* c42d590 feat: PDF Genie semantic search pipeline using Gemini API
+* 108ef93 init: enterprise employee management system on Tomcat`
+};
+
+function initInteractiveTerminal() {
+  const tabs = document.querySelectorAll('.terminal-tab');
+  const body = document.getElementById('terminal-content');
+  if (!body) return;
+
+  tabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+      tabs.forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+
+      const fileName = tab.getAttribute('data-file');
+      if (terminalFiles[fileName]) {
+        body.innerHTML = `
+          <div class="terminal-line"><span class="terminal-prompt">abhinav@workspace:~$</span> <span class="terminal-cmd">cat ${fileName}</span></div>
+          <div class="terminal-output" style="white-space: pre-wrap; margin-top: 0.5rem;">${terminalFiles[fileName]}</div>
+          <div class="terminal-line" style="margin-top: 0.75rem;"><span class="terminal-prompt">abhinav@workspace:~$</span> <span class="terminal-cursor"></span></div>
+        `;
+      }
+    });
+  });
+}
+
+// ==========================================
+// 8. RESUME MODAL & LATEX VIEWER
+// ==========================================
+const latexResumeSource = `% =========================================================
+% ABHINAV KUMAR SINGH — RESUME SOURCE
+% =========================================================
+\\documentclass[a4paper,11pt]{article}
+\\usepackage{latexsym,xcolor,ragged2e,geometry,titlesec,hyperref,marvosym}
+\\definecolor{darkblue}{RGB}{0,0,139}
+
+\\begin{document}
+\\begin{center}
+{\\Huge\\bfseries ABHINAV KUMAR SINGH}\\\\[3pt]
+\\small +91 6200529532 \\quad | \\quad abhinavkrsingh83@gmail.com \\\\
+\\href{https://www.linkedin.com/in/abhinav-kr-singh04}{LinkedIn} \\quad | \\quad 
+\\href{https://github.com/CodeMaestro-04}{CodeMaestro-04} \\quad | \\quad Dhanbad, Jharkhand
+\\end{center}
+
+\\section{\\textbf{Summary}}
+Full Stack Developer Intern with hands-on experience in developing web applications, 
+REST APIs, and database-driven systems. Proficient in Java, Python, JavaScript, and SQL,
+with experience in React, Django, Spring Boot, PostgreSQL, and Hibernate.
+
+\\section{\\textbf{Professional Experience}}
+\\textbf{Easy Insights Pvt. Ltd., New Delhi} \\hfill \\textit{10 Aug 2026 -- Present} \\\\
+\\textit{Full Stack Developer Intern}
+\\begin{itemize}
+  \\item Developing web features using React and backend services with Django REST Framework.
+  \\item Implemented asynchronous task processing using RabbitMQ with worker status & failure monitoring.
+  \\item Integrated PostgreSQL for persistent task logging and execution-status tracking.
+\\end{itemize}
+
+\\section{\\textbf{Key Projects}}
+\\begin{itemize}
+  \\item \\textbf{Multi SpringAI Chat App}: Multi-model AI comparison engine (Java, Spring Boot, Spring AI, React, Ollama, OpenAI).
+  \\item \\textbf{Aadhaar Management System}: Relational security APIs (Java 17, Spring Boot, Hibernate, MySQL).
+  \\item \\textbf{PDF GENIE}: AI-Powered PDF Q&A with Gemini API (200+ pages, 95% relevance score).
+  \\item \\textbf{Employee Management System}: MVC CRUD application deployed on Apache Tomcat.
+\\end{itemize}
+
+\\section{\\textbf{Technical Skills}}
+\\begin{itemize}
+  \\item \\textbf{Languages \\& Core:} Java 17, Python 3, JavaScript (ES6+), SQL, OOP (Object-Oriented Programming)
+  \\item \\textbf{Frameworks \\& Web:} Next.js, React, Spring Boot, Spring AI, Django REST, Hibernate JPA, HTML5, CSS3, Bootstrap
+  \\item \\textbf{AI \\& System Design:} Agentic AI System Design, Multi-Agent Workflows, LLM Tool Calling, Gemini API
+  \\item \\textbf{Methodology \\& Lifecycle:} SDLC (Agile, Scrum, Sprint Delivery, Code Reviews, QA)
+  \\item \\textbf{Messaging \\& APIs:} RabbitMQ, Telegram Bot API, Celery, RESTful APIs
+  \\item \\textbf{Databases:} PostgreSQL, MySQL, Oracle
+  \\item \\textbf{Tools \\& IDEs:} Git, GitHub, Linux, Eclipse IDE, VS Code, Postman, PostHog, Apache Tomcat
+\\end{itemize}
+
+\\section{\\textbf{Education}}
+\\textbf{B.Tech in Information Technology} \\hfill Netaji Subhash Engineering College (2023--2026) \\\\
+\\textbf{Diploma in Electrical Engineering} \\hfill Government Polytechnic Sahibganj (2023) \\\\
+\\textbf{Higher Secondary Education} \\hfill D.A.V. Public School Koylanagar (2020) \\\\
+\\textbf{Secondary Education} \\hfill D.A.V. Public School Koylanagar (2018)
+\\end{document}`;
+
+function initResumeModal() {
+  const modal = document.getElementById('resume-modal');
+  const closeBtn = document.getElementById('modal-close-btn');
+  const atsTabBtn = document.getElementById('modal-tab-ats');
+  const texTabBtn = document.getElementById('modal-tab-tex');
+  const atsView = document.getElementById('modal-ats-view');
+  const texView = document.getElementById('modal-tex-view');
+  const copyTexBtn = document.getElementById('copy-tex-btn');
+
+  if (!modal) return;
+
+  window.openModal = function(id) {
+    if (id === 'resume-modal') {
+      modal.classList.add('is-active');
+      document.body.style.overflow = 'hidden';
+    }
+  };
+
+  window.closeModal = function() {
+    modal.classList.remove('is-active');
+    document.body.style.overflow = '';
+  };
+
+  if (closeBtn) closeBtn.addEventListener('click', window.closeModal);
+
+  modal.addEventListener('click', (e) => {
+    if (e.target === modal) window.closeModal();
+  });
+
+  if (atsTabBtn && texTabBtn && atsView && texView) {
+    atsTabBtn.addEventListener('click', () => {
+      atsTabBtn.classList.add('active');
+      texTabBtn.classList.remove('active');
+      atsView.style.display = 'block';
+      texView.style.display = 'none';
+      if (copyTexBtn) copyTexBtn.style.display = 'none';
+    });
+
+    texTabBtn.addEventListener('click', () => {
+      texTabBtn.classList.add('active');
+      atsTabBtn.classList.remove('active');
+      atsView.style.display = 'none';
+      texView.style.display = 'block';
+      texView.textContent = latexResumeSource;
+      if (copyTexBtn) copyTexBtn.style.display = 'inline-flex';
+    });
+  }
+
+  if (copyTexBtn) {
+    copyTexBtn.addEventListener('click', () => {
+      navigator.clipboard.writeText(latexResumeSource).then(() => {
+        showToast('LaTeX source code copied to clipboard!');
+      });
+    });
+  }
+}
+
+// ==========================================
+// 9. TOAST NOTIFICATIONS & CLIPBOARD UTILITIES
+// ==========================================
+let toastTimer = null;
+
+window.showToast = function(msg) {
+  let toast = document.getElementById('toast');
+  if (!toast) {
+    toast = document.createElement('div');
+    toast.id = 'toast';
+    document.body.appendChild(toast);
+  }
+  toast.innerHTML = `<i class="fa-solid fa-circle-check" style="color: #34d399; font-size: 1.1rem;"></i> <span>${msg}</span>`;
+  toast.classList.add('show');
+
+  if (toastTimer) {
+    clearTimeout(toastTimer);
+  }
+
+  toastTimer = setTimeout(() => {
+    toast.classList.remove('show');
   }, 3200);
-}
+};
 
-function copyToClipboard(text, label) {
-  if (navigator.clipboard && window.isSecureContext) {
-    navigator.clipboard.writeText(text).then(() => {
-      showToast(`✓ Copied ${label}: ${text}`);
-    }).catch(() => fallbackCopy(text, label));
+window.copyToClipboard = function(text, label, triggerElement, event) {
+  if (event) {
+    if (event.stopPropagation) event.stopPropagation();
+    if (event.preventDefault) event.preventDefault();
+  }
+
+  function handleSuccess() {
+    showToast(`Copied ${label || 'text'} to clipboard!`);
+
+    if (triggerElement) {
+      triggerElement.classList.add('is-copied');
+      const textSpan = triggerElement.querySelector('span');
+      const originalText = textSpan ? textSpan.textContent : null;
+      const icon = triggerElement.querySelector('i');
+      const originalIconClass = icon ? icon.className : null;
+
+      if (textSpan) textSpan.textContent = 'Copied!';
+      if (icon) icon.className = 'fa-solid fa-check';
+
+      setTimeout(() => {
+        triggerElement.classList.remove('is-copied');
+        if (textSpan && originalText) textSpan.textContent = originalText;
+        if (icon && originalIconClass) icon.className = originalIconClass;
+      }, 2000);
+    }
+  }
+
+  function fallbackCopy(val) {
+    try {
+      const textarea = document.createElement('textarea');
+      textarea.value = val;
+      textarea.style.position = 'fixed';
+      textarea.style.top = '0';
+      textarea.style.left = '0';
+      textarea.style.width = '2em';
+      textarea.style.height = '2em';
+      textarea.style.padding = '0';
+      textarea.style.border = 'none';
+      textarea.style.outline = 'none';
+      textarea.style.boxShadow = 'none';
+      textarea.style.background = 'transparent';
+      textarea.style.opacity = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+
+      const successful = document.execCommand('copy');
+      document.body.removeChild(textarea);
+      if (successful) {
+        handleSuccess();
+        return;
+      }
+    } catch (e) {
+      console.warn('Fallback copy failed', e);
+    }
+
+    // Secondary fallback
+    window.prompt('Copy to clipboard: Ctrl+C or Cmd+C, then Enter', val);
+  }
+
+  if (navigator && navigator.clipboard && typeof navigator.clipboard.writeText === 'function') {
+    navigator.clipboard.writeText(text)
+      .then(() => {
+        handleSuccess();
+      })
+      .catch((err) => {
+        console.warn('Clipboard writeText failed, trying fallback', err);
+        fallbackCopy(text);
+      });
   } else {
-    fallbackCopy(text, label);
+    fallbackCopy(text);
   }
-}
-
-function fallbackCopy(text, label) {
-  const ta = document.createElement('textarea');
-  ta.value = text;
-  ta.setAttribute('readonly', '');
-  ta.style.position = 'fixed';
-  ta.style.opacity = '0';
-  document.body.appendChild(ta);
-  ta.select();
-  try {
-    document.execCommand('copy');
-    showToast(`✓ Copied ${label}: ${text}`);
-  } catch (e) {
-    showToast(`Copied: ${text}`);
-  }
-  ta.remove();
-}
+};
 
 // ==========================================
-// 4. SCROLL PROGRESS BAR
-// ==========================================
-function setupScrollProgress() {
-  const progressBar = document.getElementById('scroll-progress');
-  if (!progressBar) return;
-
-  window.addEventListener('scroll', () => {
-    const doc = document.documentElement;
-    const progress = doc.scrollTop / Math.max(1, doc.scrollHeight - doc.clientHeight);
-    progressBar.style.transform = `scaleX(${progress})`;
-  }, { passive: true });
-}
-
-// ==========================================
-// 5. INTERACTIVE ARCHITECTURE PIPELINE (Telegram Bot, RabbitMQ & PostgreSQL Task System)
+// 10. INTERACTIVE ARCHITECTURE PIPELINE (Telegram Bot, RabbitMQ & PostgreSQL)
 // ==========================================
 function setupInteractivePipeline() {
   const svgNS = 'http://www.w3.org/2000/svg';
@@ -284,7 +548,7 @@ function setupInteractivePipeline() {
     api: 'Company APIs: Dispatches task operations into RabbitMQ queues for asynchronous background processing.',
     heartbeat: 'Worker Status & Failure Monitor: Tracks RabbitMQ worker execution status, detects failures, and logs every state transition in PostgreSQL.'
   };
-  const DEFAULT_CAPTION = captionEl.textContent;
+  const DEFAULT_CAPTION = captionEl.textContent.trim();
 
   function createFlowDot(pathId, cls, beginSec, durSec) {
     const circle = document.createElementNS(svgNS, 'circle');
@@ -334,137 +598,81 @@ function setupInteractivePipeline() {
 
   sources.forEach((g) => {
     g.addEventListener('click', () => selectSource(g.dataset.k));
-  });
-}
-
-// ==========================================
-// 6. PROJECT CATEGORY FILTERS
-// ==========================================
-function setupProjectFilters() {
-  const buttons = document.querySelectorAll(".project-filter-btn");
-  const cards = document.querySelectorAll(".project-case-card");
-
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      const filter = btn.getAttribute("data-filter");
-
-      buttons.forEach((b) => {
-        b.classList.remove("bg-emerald-500", "text-slate-950", "border-emerald-400", "shadow-lg", "shadow-emerald-500/20");
-        b.classList.add("bg-slate-900/80", "text-slate-300", "border-slate-700");
-      });
-
-      btn.classList.add("bg-emerald-500", "text-slate-950", "border-emerald-400", "shadow-lg", "shadow-emerald-500/20");
-      btn.classList.remove("bg-slate-900/80", "text-slate-300", "border-slate-700");
-
-      cards.forEach((card) => {
-        const tags = card.getAttribute("data-tags") || "";
-        if (filter === "all" || tags.includes(filter)) {
-          card.style.display = "";
-        } else {
-          card.style.display = "none";
-        }
-      });
+    g.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' || e.key === ' ') {
+        e.preventDefault();
+        selectSource(g.dataset.k);
+      }
     });
   });
 }
 
 // ==========================================
-// 7. SKILL FILTERING
+// 10. THEME SWITCHER (Dark & Light Mode)
 // ==========================================
-function setupSkillFilters() {
-  const buttons = document.querySelectorAll(".skill-filter-btn");
-  const skillCards = document.querySelectorAll(".skill-item");
+function initTheme() {
+  const themeToggleBtn = document.getElementById('theme-toggle-btn');
+  const storedTheme = localStorage.getItem('portfolio-theme');
+  const systemPrefersDark = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches;
+  
+  // Default to stored preference, or system dark, or dark by default
+  let currentTheme = storedTheme || (systemPrefersDark ? 'dark' : 'dark');
 
-  buttons.forEach((btn) => {
-    btn.addEventListener("click", () => {
-      buttons.forEach((b) => {
-        b.classList.remove("bg-emerald-600", "text-slate-950", "shadow-lg", "shadow-emerald-500/25");
-        b.classList.add("bg-slate-800/80", "text-slate-300");
-      });
+  function updateButtonUI(theme) {
+    if (!themeToggleBtn) return;
+    const label = themeToggleBtn.querySelector('.theme-toggle-label');
+    if (label) {
+      label.textContent = theme === 'dark' ? 'LIGHT' : 'DARK';
+    }
+    const targetMode = theme === 'dark' ? 'Light' : 'Dark';
+    themeToggleBtn.setAttribute('title', `Switch to ${targetMode} Mode (Press T)`);
+    themeToggleBtn.setAttribute('aria-label', `Switch to ${targetMode} Mode`);
+  }
 
-      btn.classList.add("bg-emerald-600", "text-slate-950", "shadow-lg", "shadow-emerald-500/25");
-      btn.classList.remove("bg-slate-800/80", "text-slate-300");
+  function applyTheme(theme, save = true) {
+    currentTheme = theme;
+    document.documentElement.setAttribute('data-theme', theme);
+    if (save) {
+      try {
+        localStorage.setItem('portfolio-theme', theme);
+      } catch (err) {}
+    }
+    updateButtonUI(theme);
+  }
 
-      const category = btn.getAttribute("data-category");
+  // Apply initial theme
+  applyTheme(currentTheme, false);
 
-      skillCards.forEach((card) => {
-        if (category === "all" || card.getAttribute("data-category").includes(category)) {
-          card.style.display = "flex";
-        } else {
-          card.style.display = "none";
-        }
-      });
+  // Button Click Listener
+  if (themeToggleBtn) {
+    themeToggleBtn.addEventListener('click', (e) => {
+      e.preventDefault();
+      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(nextTheme, true);
+      if (typeof showToast === 'function') {
+        showToast(`Switched to ${nextTheme === 'dark' ? 'Dark' : 'Light'} Mode`);
+      }
     });
+  }
+
+  // Keyboard shortcut: Press 'T' or 't' to toggle theme (when not typing in form inputs)
+  window.addEventListener('keydown', (e) => {
+    if (e.target && ['INPUT', 'TEXTAREA', 'SELECT'].includes(e.target.tagName)) return;
+    if (e.key === 't' || e.key === 'T') {
+      const nextTheme = currentTheme === 'dark' ? 'light' : 'dark';
+      applyTheme(nextTheme, true);
+      if (typeof showToast === 'function') {
+        showToast(`Theme: ${nextTheme.toUpperCase()} (Shortcut: T)`);
+      }
+    }
   });
-}
 
-// ==========================================
-// 8. MODALS MANAGEMENT
-// ==========================================
-function openModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) {
-    modal.classList.remove("hidden");
-    modal.classList.add("flex");
-    document.body.style.overflow = "hidden";
-  }
-}
-
-function closeModal(modalId) {
-  const modal = document.getElementById(modalId);
-  if (modal) {
-    modal.classList.add("hidden");
-    modal.classList.remove("flex");
-    document.body.style.overflow = "auto";
-  }
-}
-
-// ==========================================
-// 9. INITIALIZE ALL ON DOM CONTENT LOADED
-// ==========================================
-document.addEventListener("DOMContentLoaded", () => {
-  initThreeJS();
-  typeWriter();
-  setupScrollProgress();
-  setupInteractivePipeline();
-  setupProjectFilters();
-  setupSkillFilters();
-
-  // Mobile Menu Toggle
-  const menuBtn = document.getElementById("mobile-menu-btn");
-  const mobileMenu = document.getElementById("mobile-menu");
-  if (menuBtn && mobileMenu) {
-    menuBtn.addEventListener("click", () => {
-      mobileMenu.classList.toggle("hidden");
+  // Listen for OS system theme changes if user hasn't explicitly saved a preference
+  if (window.matchMedia) {
+    window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+      if (!localStorage.getItem('portfolio-theme')) {
+        applyTheme(e.matches ? 'dark' : 'light', false);
+      }
     });
   }
-
-  // Active Navbar Link Highlighting on Scroll
-  const navLinks = document.querySelectorAll('.site-nav-link');
-  const sectionIds = ['tldr', 'about', 'experience', 'projects', 'skills', 'education', 'contact'];
-  const sections = sectionIds.map((id) => document.getElementById(id)).filter(Boolean);
-  if (sections.length && 'IntersectionObserver' in window) {
-    const navObserver = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          const id = '#' + entry.target.id;
-          navLinks.forEach((link) => {
-            link.classList.toggle('active', link.getAttribute('href') === id);
-          });
-        }
-      });
-    }, { rootMargin: '-35% 0px -55% 0px' });
-    sections.forEach((sec) => navObserver.observe(sec));
-  }
-
-  // Initialize VanillaTilt if loaded
-  if (typeof VanillaTilt !== "undefined") {
-    VanillaTilt.init(document.querySelectorAll("[data-tilt]"), {
-      max: 10,
-      speed: 400,
-      glare: true,
-      "max-glare": 0.2,
-      perspective: 1000
-    });
-  }
-});
+}
